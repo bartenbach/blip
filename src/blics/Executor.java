@@ -1,6 +1,6 @@
 /*
  * BLICS
- *Attribute Only (Public) License
+ * Attribute Only (Public) License
     Version 0.a5, Feb 07, 2012
     
 Copyright (C) 2012 Blake Bartenbach <SeeD419@gmail.com> (@SeeD419)
