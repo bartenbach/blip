@@ -18,8 +18,6 @@ import java.awt.TrayIcon;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -351,6 +349,9 @@ public class BlipUI extends javax.swing.JFrame {
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
         if (!missingFields()) {
             progress.setIndeterminate(true);
+            Executor.execute(Command.killdhcpcd());
+            Executor.execute(Command.setInterfaceDown(inter));
+            Executor.execute(Command.killWpa_Supplicant());
             if (!setInterfaceUp()) {
                 return;
             }
@@ -405,7 +406,6 @@ public class BlipUI extends javax.swing.JFrame {
     private boolean setInterfaceUp() {
             inter = InterfaceField.getText();
             progressLabel.setText("Putting " + inter + " up...");
-            Executor.execute(Command.setInterfaceDown(inter));
             status = Executor.execute(Command.setInterfaceUp(inter));
             if (status != 0) {
                 Log.severe("Couldn't put " + inter + " up.");
@@ -419,7 +419,6 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     private void handleWPA() {
-        Executor.execute(Command.killWpa_Supplicant());
         File wpa = new File("/etc/wpa_supplicant.conf");
         if (wpa.exists()) {
             Log.info("wpa_supplicant.conf found");
@@ -457,7 +456,6 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     private void startDHCP() {
-        Executor.execute(Command.killdhcpcd());
         Log.info("Starting DHCPCD");
         progressLabel.setText("Starting dhcpcd...");
         status = Executor.execute(Command.dhcpcd(inter));
@@ -468,11 +466,11 @@ public class BlipUI extends javax.swing.JFrame {
             return;
         }
         Log.info("Dhcpcd started successfully");
-        try {
-            conTest.sleep(10000);
-        } catch (InterruptedException ex) {
-            Log.warning("Connection test thread couldn't sleep");
-        }
+//        try {
+//            conTest.sleep(10000);
+//        } catch (InterruptedException ex) {
+//            Log.warning("Connection test thread couldn't sleep");
+//        }
     }
     
     private void centerWindow() {

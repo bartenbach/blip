@@ -30,6 +30,7 @@ public class Executor extends Thread {
     
     private static Process proc;
     private static BufferedReader br;
+    private static String command;
     
     
     public Executor() {
@@ -90,6 +91,6 @@ public class Executor extends Thread {
 
     @Override
     public void run() {
-        
+
     }
 }

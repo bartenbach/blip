@@ -18,6 +18,7 @@ package blip;
 public class ConnectionTester extends Thread {
     
     private boolean connection;
+    private static boolean lastConnect;
 
     @Override
     public void run() {
@@ -25,13 +26,18 @@ public class ConnectionTester extends Thread {
             try {
                 connection = testConnection();
                 if(!connection) {
+                    if (lastConnect != connection) {
                     Log.info("Not connected.");
                     BlipUI.setProgressLabel("Not connected");
                     BlipUI.setProgressBar(false);
                     BlipUI.enableDisconnect(false);
                     BlipUI.enableConnection(true);
+                    BlipUI.setProgressBar(false);
                     BlipUI.setProgressValue(0);
+                    lastConnect = false;                    
+                    }
                 } else {
+                    if (lastConnect != connection) {
                     Log.info("Connected.");
                     BlipUI.enableConnection(false);
                     BlipUI.enableDisconnect(true);
@@ -40,9 +46,12 @@ public class ConnectionTester extends Thread {
                     } else {
                         BlipUI.setProgressLabel("Connected");
                     }
+                    BlipUI.setProgressBar(false);
                     BlipUI.setProgressValue(100);
+                    lastConnect = true;                     
+                    }                   
                 }
-                Thread.sleep(10000);                
+                Thread.sleep(5000);                
             } catch (InterruptedException ex) {
                 Log.warning("Connection test thread interrupted");
             }
