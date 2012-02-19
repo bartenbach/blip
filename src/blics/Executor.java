@@ -23,7 +23,9 @@ import java.io.InputStreamReader;
  *
  * @author seed419
  */
-public class Executor implements Runnable{
+public class Executor extends Thread {
+    
+    // This isn't working.  Going to have to rethink the implementation here..
     
     
     private static Process proc;
@@ -88,6 +90,6 @@ public class Executor implements Runnable{
 
     @Override
     public void run() {
-        this.run();
+
     }
 }

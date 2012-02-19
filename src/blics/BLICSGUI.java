@@ -19,8 +19,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 
@@ -31,7 +29,7 @@ import javax.swing.JOptionPane;
 public class BLICSGUI extends javax.swing.JFrame {
     
     
-    private static final String version = "0.1 Alpha";
+    private static final String version = "0.2 Alpha";
     private static final long serialVersionUID = 1L;
     private String inter;
     private String essid;
@@ -57,13 +55,10 @@ public class BLICSGUI extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "You must run blics as root!", "Blics", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         } else {
-            status = Executor.execute(Command.ping());
-            if (status == 0) {
-                progressLabel.setText("Currently Connected");
-                progress.setValue(100);
-            } else {
-                progressLabel.setText("Not Connected");
-            }
+            Thread conTest = new ConnectionTester();
+            conTest.start();
+            Thread exe = new Executor();
+            exe.start();
             settings = new File("/etc/blics.conf");
             if(!settings.exists()) {
                 try {
@@ -77,6 +72,18 @@ public class BLICSGUI extends javax.swing.JFrame {
                 loadSettings();
             }
         }        
+    }
+    
+    public static void setProgressLabel(String text) {
+        progressLabel.setText(text);
+    }
+    
+    public static void setProgressBar(Boolean bool) {
+        progress.setIndeterminate(bool);
+    }
+    
+    public static void setProgressValue(int val) {
+        progress.setValue(val);
     }
     
     private void loadSettings() {
@@ -288,16 +295,11 @@ public class BLICSGUI extends javax.swing.JFrame {
         } 
         inter = InterfaceField.getText();
         int ping = Executor.execute(Command.ping());
-        if (ping == 0) {
-            Executor.execute(Command.setInterfaceDown(inter));
-            Executor.execute(Command.killdhcpcd());
-            Executor.execute(Command.killWpa_Supplicant());
-        } else {
-            Executor.execute(Command.setInterfaceDown(inter));
-            Executor.execute(Command.killdhcpcd());
-            Executor.execute(Command.killWpa_Supplicant());
-            progressLabel.setText("You aren't currently connected to a network");
-        }
+        Executor.execute(Command.setInterfaceDown(inter));
+        Executor.execute(Command.killdhcpcd());
+        Executor.execute(Command.killWpa_Supplicant());
+        progressLabel.setText("Disconnected.");
+        
     }//GEN-LAST:event_disconnectButtonActionPerformed
 
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
@@ -458,8 +460,8 @@ public class BLICSGUI extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JProgressBar progress;
-    private javax.swing.JLabel progressLabel;
+    private static javax.swing.JProgressBar progress;
+    private static javax.swing.JLabel progressLabel;
     // End of variables declaration//GEN-END:variables
 
 }

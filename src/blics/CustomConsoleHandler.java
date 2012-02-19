@@ -21,9 +21,10 @@ import java.util.logging.ConsoleHandler;
  *
  * @author seed419
  */
-public class CustomConsoleHandler extends ConsoleHandler{
+public class CustomConsoleHandler extends ConsoleHandler {
     
-    public CustomConsoleHandler(){
+    
+    public CustomConsoleHandler() {
         super();
         this.setOutputStream(System.out);
     }

@@ -260,6 +260,10 @@
               </SubComponents>
             </Container>
             <Component class="javax.swing.JProgressBar" name="progress">
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new javax.swing.JProgressBar()"/>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="10"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JLabel" name="progressLabel">
               <Properties>
@@ -267,6 +271,9 @@
                   <Font name="SansSerif" size="12" style="1"/>
                 </Property>
               </Properties>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="10"/>
+              </AuxValues>
             </Component>
             <Component class="javax.swing.JButton" name="connectButton">
               <Properties>

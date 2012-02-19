@@ -26,12 +26,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Log {
+    
 
-    final public static Logger log = Logger.getLogger("TPCGames");
+    final public static Logger log = Logger.getLogger("BLICS");
     private static Handler ch;
+    
 
-    public Log()
-    {
+    public Log() {
         log.setUseParentHandlers(false);
         ch = new CustomConsoleHandler();   
         ch.setFormatter(new LogFormatter());
