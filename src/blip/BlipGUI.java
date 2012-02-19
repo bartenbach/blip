@@ -1,5 +1,5 @@
 /*
- * BLICS
+ * blip
  * Attribute Only (Public) License
     Version 0.a5, Feb 07, 2012
     
@@ -9,14 +9,12 @@ Anyone is allowed to copy and distribute verbatim or modified
 copies of this license document and altering is allowed as long 
 as you attribute the author(s) of this license document / files.
 */
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package blics;
+package blip;
 
 import java.awt.Dimension;
+import java.awt.SystemTray;
 import java.awt.Toolkit;
+import java.awt.TrayIcon;
 import java.io.File;
 import java.io.IOException;
 import javax.swing.JCheckBox;
@@ -26,7 +24,7 @@ import javax.swing.JOptionPane;
  *
  * @author seed419
  */
-public class BLICSGUI extends javax.swing.JFrame {
+public class BlipGUI extends javax.swing.JFrame {
     
     
     private static final String version = "0.2 Alpha";
@@ -36,12 +34,13 @@ public class BLICSGUI extends javax.swing.JFrame {
     private int uid = 999;
     private int status = 999;
     private File settings;
+    private TrayIcon trayIcon;
 
     
     /**
      * Creates new form BLICSGUI
      */
-    public BLICSGUI() {
+    public BlipGUI() {
         String Suid = Executor.read(Command.getUID());
         try {
             uid = Integer.parseInt(Suid);
@@ -52,18 +51,18 @@ public class BLICSGUI extends javax.swing.JFrame {
         centerWindow();
         initComponents();
         if(uid != 0) {
-            JOptionPane.showMessageDialog(null, "You must run blics as root!", "Blics", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         } else {
             Thread conTest = new ConnectionTester();
             conTest.start();
             Thread exe = new Executor();
             exe.start();
-            settings = new File("/etc/blics.conf");
+            settings = new File("/etc/blip.conf");
             if(!settings.exists()) {
                 try {
                     settings.createNewFile();
-                    Log.info("Created empty settings file in /etc/blics.conf");
+                    Log.info("Created empty settings file in /etc/blip.conf");
                 } catch (IOException ex) {
                     Log.severe("Could not create settings file!");
                     progressLabel.setText("Could not create settings file!");
@@ -72,6 +71,14 @@ public class BLICSGUI extends javax.swing.JFrame {
                 loadSettings();
             }
         }        
+    }
+    
+    public void initTray() {
+        trayIcon = null;
+        if(SystemTray.isSupported()) {
+            Log.info("System tray supported.");
+            SystemTray tray = SystemTray.getSystemTray();
+        }
     }
     
     public static void setProgressLabel(String text) {
@@ -123,7 +130,7 @@ public class BLICSGUI extends javax.swing.JFrame {
         jLabel2.setText("ESSID");
 
         jLabel1.setFont(new java.awt.Font("SansSerif", 1, 14)); // NOI18N
-        jLabel1.setText("BLICS Version " + version);
+        jLabel1.setText("blip Version " + version);
 
         jLabel3.setFont(new java.awt.Font("SansSerif", 1, 12)); // NOI18N
         jLabel3.setText("Interface");
@@ -206,16 +213,16 @@ public class BLICSGUI extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addComponent(connectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(26, 26, 26)
+                        .addComponent(connectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(disconnectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(disconnectButton)
+                        .addGap(32, 32, 32))
                     .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -231,6 +238,7 @@ public class BLICSGUI extends javax.swing.JFrame {
                                     .addComponent(ESSIDField, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -249,13 +257,13 @@ public class BLICSGUI extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(disconnectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(connectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(connectButton)
+                    .addComponent(disconnectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 11, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(66, 66, 66))
         );
 
         jTabbedPane1.addTab("Connect", jPanel1);
@@ -268,7 +276,7 @@ public class BLICSGUI extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -294,10 +302,13 @@ public class BLICSGUI extends javax.swing.JFrame {
             return;
         } 
         inter = InterfaceField.getText();
-        int ping = Executor.execute(Command.ping());
+        Log.info("Setting interface down");
         Executor.execute(Command.setInterfaceDown(inter));
+        Log.info("Shutting down dhcpcd");
         Executor.execute(Command.killdhcpcd());
+        Log.info("Shutting down wpa_supplicant");
         Executor.execute(Command.killWpa_Supplicant());
+        Log.info("Disconnected.");
         progressLabel.setText("Disconnected.");
         
     }//GEN-LAST:event_disconnectButtonActionPerformed
@@ -373,6 +384,7 @@ public class BLICSGUI extends javax.swing.JFrame {
             }
             startDHCP();
         } else {
+            Log.info("wpa_supplicant file not found");
            // create wpa_supplicant file... 
         }
     }
@@ -390,6 +402,8 @@ public class BLICSGUI extends javax.swing.JFrame {
         progressLabel.setText("Connected to " + essid);       
         progress.setIndeterminate(false);
         progress.setValue(100);
+        connectButton.setEnabled(false);
+        Log.info("Dhcpcd started successfully");
     }
     
     private void centerWindow() {
@@ -421,13 +435,13 @@ public class BLICSGUI extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(BLICSGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(BLICSGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(BLICSGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(BLICSGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -439,7 +453,7 @@ public class BLICSGUI extends javax.swing.JFrame {
             @Override
             public void run() {
                 Log l = new Log();
-                new BLICSGUI().setVisible(true);
+                new BlipGUI().setVisible(true);
             }
         });
     }

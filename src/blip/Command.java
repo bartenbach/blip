@@ -1,5 +1,5 @@
 /*
- * BLICS
+ * blip
  * Attribute Only (Public) License
     Version 0.a5, Feb 07, 2012
     
@@ -13,7 +13,7 @@ as you attribute the author(s) of this license document / files.
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package blics;
+package blip;
 
 /**
  *
