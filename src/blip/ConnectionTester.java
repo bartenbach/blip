@@ -26,20 +26,21 @@ public class ConnectionTester extends Thread {
                 connection = testConnection();
                 if(!connection) {
                     Log.info("Not connected.");
-                    BlipGUI.setProgressLabel("Not connected");
-                    BlipGUI.setProgressBar(false);
-                    BlipGUI.enableDisconnect(false);
-                    BlipGUI.enableConnection(true);
+                    BlipUI.setProgressLabel("Not connected");
+                    BlipUI.setProgressBar(false);
+                    BlipUI.enableDisconnect(false);
+                    BlipUI.enableConnection(true);
+                    BlipUI.setProgressValue(0);
                 } else {
                     Log.info("Connected.");
-                    BlipGUI.enableConnection(false);
-                    BlipGUI.enableDisconnect(true);
-                    if(BlipGUI.getEssid() != null) {
-                        BlipGUI.setProgressLabel("Connected to " + BlipGUI.getEssid());
+                    BlipUI.enableConnection(false);
+                    BlipUI.enableDisconnect(true);
+                    if(BlipUI.getEssid() != null) {
+                        BlipUI.setProgressLabel("Connected to " + BlipUI.getEssid());
                     } else {
-                        BlipGUI.setProgressLabel("Connected");
+                        BlipUI.setProgressLabel("Connected");
                     }
-                    BlipGUI.setProgressValue(100);
+                    BlipUI.setProgressValue(100);
                 }
                 Thread.sleep(10000);                
             } catch (InterruptedException ex) {
@@ -55,5 +56,9 @@ public class ConnectionTester extends Thread {
         }
         return true;
     }
+    
+//    public void sleep(int milli) {
+//        this.sleep(milli);
+//    }
     
 }

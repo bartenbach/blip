@@ -25,7 +25,7 @@ import java.io.InputStreamReader;
  */
 public class Executor extends Thread {
     
-    // This isn't working.  Going to have to rethink the implementation here..
+    //TODO This absolutely needs to run in a separate thread.
     
     
     private static Process proc;
@@ -90,6 +90,6 @@ public class Executor extends Thread {
 
     @Override
     public void run() {
-
+        
     }
 }

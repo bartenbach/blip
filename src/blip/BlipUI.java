@@ -16,13 +16,17 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
  *
  * @author seed419
  */
-public class BlipGUI extends javax.swing.JFrame {
+public class BlipUI extends javax.swing.JFrame {
     
     
     private static final String version = "0.2 Alpha";
@@ -34,12 +38,13 @@ public class BlipGUI extends javax.swing.JFrame {
     private File settings;
     private static TrayIcon trayIcon;
     private static ConfigurationFile config;
+    private static Thread conTest;
 
     
     /**
      * Creates new form blip
      */
-    public BlipGUI() {
+    public BlipUI() {
         centerWindow();
         initComponents();
     }
@@ -50,9 +55,15 @@ public class BlipGUI extends javax.swing.JFrame {
             System.exit(0);
         } else {
             Log.info("Starting threads");
-            Thread conTest = new ConnectionTester();
+            conTest = new ConnectionTester();
             conTest.start();
-            config = new ConfigurationFile();            
+            try {
+                config = new ConfigurationFile();
+            } catch (FileNotFoundException ex) {
+                Log.severe("Configuration file not found");
+            } catch (IOException ex) {
+                Log.severe("Couldn't read configuration file");
+            }
             Thread exe = new Executor();
             exe.start();
             checkEncryptionBox();
@@ -114,6 +125,10 @@ public class BlipGUI extends javax.swing.JFrame {
             return ESSIDField.getText();
         }
         return null;
+    }
+    
+    public static void setEssid(String essid) {
+        ESSIDField.setText(essid);
     }
     
     public static void enableConnection(boolean b) {
@@ -326,7 +341,10 @@ public class BlipGUI extends javax.swing.JFrame {
         Log.info("Shutting down wpa_supplicant");
         Executor.execute(Command.killWpa_Supplicant());
         Log.info("Disconnected.");
-        progressLabel.setText("Disconnected.");
+        connectButton.setEnabled(true);
+        disconnectButton.setEnabled(false);
+        progressLabel.setText("Not connected");
+        progress.setValue(0);
         
     }//GEN-LAST:event_disconnectButtonActionPerformed
 
@@ -340,12 +358,35 @@ public class BlipGUI extends javax.swing.JFrame {
                 return;
             }
             if (encryptionCheckBox.isSelected()) {
+                hideEncryptionKey();
                 if(WPAButton.isSelected()) {
                     handleWPA();
                 }
             }
+            try {
+                config.saveSettings();
+            } catch (IOException ex) {
+                Log.severe("Unable to save settings!");
+            }
         }    
     }//GEN-LAST:event_connectButtonActionPerformed
+    
+    private void hideEncryptionKey() {
+        StringBuilder sb = new StringBuilder();
+        int length = encryptionKeyTextField.getText().length();
+        for(int i=0;i<length;i++) {
+            sb.append("*");
+        }
+        encryptionKeyTextField.setText(sb.toString());
+    }
+    
+    public static void setPrivateEncryptionKey(int length) {
+        StringBuilder sb = new StringBuilder();
+        for(int i=0;i<length;i++) {
+            sb.append("*");
+        }
+        encryptionKeyTextField.setText(sb.toString());
+    }
     
     private boolean connectToESSID() {
             essid = ESSIDField.getText();
@@ -378,6 +419,7 @@ public class BlipGUI extends javax.swing.JFrame {
     }
     
     private void handleWPA() {
+        Executor.execute(Command.killWpa_Supplicant());
         File wpa = new File("/etc/wpa_supplicant.conf");
         if (wpa.exists()) {
             Log.info("wpa_supplicant.conf found");
@@ -391,7 +433,8 @@ public class BlipGUI extends javax.swing.JFrame {
             startDHCP();
         } else {
             Log.info("wpa_supplicant file not found");
-           // create wpa_supplicant file... 
+            
+           //TODO create wpa_supplicant file... 
         }
     }
     
@@ -414,6 +457,7 @@ public class BlipGUI extends javax.swing.JFrame {
     }
     
     private void startDHCP() {
+        Executor.execute(Command.killdhcpcd());
         Log.info("Starting DHCPCD");
         progressLabel.setText("Starting dhcpcd...");
         status = Executor.execute(Command.dhcpcd(inter));
@@ -423,11 +467,12 @@ public class BlipGUI extends javax.swing.JFrame {
             progress.setIndeterminate(false);
             return;
         }
-        progressLabel.setText("Connected to " + essid);       
-        progress.setIndeterminate(false);
-        progress.setValue(100);
-        connectButton.setEnabled(false);
         Log.info("Dhcpcd started successfully");
+        try {
+            conTest.sleep(10000);
+        } catch (InterruptedException ex) {
+            Log.warning("Connection test thread couldn't sleep");
+        }
     }
     
     private void centerWindow() {
@@ -436,6 +481,46 @@ public class BlipGUI extends javax.swing.JFrame {
         int width = (int) (d.getWidth() / 3) + 140;
         int height = (int) (d.getHeight() / 3) - 50;
         this.setLocation(width, height);       
+    }
+    
+    public static String getInterface() {
+        return InterfaceField.getText();
+    }
+    
+    public static void setInterface(String inter) {
+        InterfaceField.setText(inter);
+    }
+    
+    public static boolean isEncrypted() {
+        return encryptionCheckBox.isSelected();
+    }
+    
+    public static void setEncrypted(boolean b) {
+        encryptionCheckBox.setSelected(b);
+    }
+    
+    public static boolean isWPA() {
+        return WPAButton.isSelected();
+    }
+    
+    public static void setWPA(boolean b) {
+        WPAButton.setSelected(b);
+    }
+    
+    public static boolean isWEP() {
+        return WEPButton.isSelected();
+    }
+    
+    public static void setWEP(boolean b) {
+        WEPButton.setSelected(b);
+    }
+    
+    public static String getEncryptionKey() {
+        return encryptionKeyTextField.getText();
+    }
+    
+    public static void setEncryptionKey(String key) {
+        encryptionKeyTextField.setText(key);
     }
     
     /**
@@ -459,13 +544,13 @@ public class BlipGUI extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(BlipGUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(BlipUI.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -477,7 +562,7 @@ public class BlipGUI extends javax.swing.JFrame {
             @Override
             public void run() {
                 Log l = new Log();
-                new BlipGUI().setVisible(true);
+                new BlipUI().setVisible(true);
                 init();
                 initTray();
             }
@@ -485,7 +570,7 @@ public class BlipGUI extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private static javax.swing.JTextField ESSIDField;
-    private javax.swing.JTextField InterfaceField;
+    private static javax.swing.JTextField InterfaceField;
     private static javax.swing.JRadioButton WEPButton;
     private static javax.swing.JRadioButton WPAButton;
     private static javax.swing.JButton connectButton;
