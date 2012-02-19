@@ -26,11 +26,19 @@ public class ConnectionTester extends Thread {
                 connection = testConnection();
                 if(!connection) {
                     Log.info("Not connected.");
-                    BlipGUI.setProgressLabel("Connection lost");
+                    BlipGUI.setProgressLabel("Not connected");
                     BlipGUI.setProgressBar(false);
+                    BlipGUI.enableDisconnect(false);
+                    BlipGUI.enableConnection(true);
                 } else {
                     Log.info("Connected.");
-                    BlipGUI.setProgressLabel("Connected");
+                    BlipGUI.enableConnection(false);
+                    BlipGUI.enableDisconnect(true);
+                    if(BlipGUI.getEssid() != null) {
+                        BlipGUI.setProgressLabel("Connected to " + BlipGUI.getEssid());
+                    } else {
+                        BlipGUI.setProgressLabel("Connected");
+                    }
                     BlipGUI.setProgressValue(100);
                 }
                 Thread.sleep(10000);                

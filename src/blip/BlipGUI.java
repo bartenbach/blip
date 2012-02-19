@@ -16,8 +16,6 @@ import java.awt.SystemTray;
 import java.awt.Toolkit;
 import java.awt.TrayIcon;
 import java.io.File;
-import java.io.IOException;
-import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 
 /**
@@ -31,16 +29,50 @@ public class BlipGUI extends javax.swing.JFrame {
     private static final long serialVersionUID = 1L;
     private String inter;
     private String essid;
-    private int uid = 999;
+    private static int uid = 999;
     private int status = 999;
     private File settings;
-    private TrayIcon trayIcon;
+    private static TrayIcon trayIcon;
+    private static ConfigurationFile config;
 
     
     /**
-     * Creates new form BLICSGUI
+     * Creates new form blip
      */
     public BlipGUI() {
+        centerWindow();
+        initComponents();
+    }
+    
+    public static void init() {
+        if(!root()) {
+            JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
+            System.exit(0);
+        } else {
+            Log.info("Starting threads");
+            Thread conTest = new ConnectionTester();
+            conTest.start();
+            config = new ConfigurationFile();            
+            Thread exe = new Executor();
+            exe.start();
+            checkEncryptionBox();
+        }      
+    }
+    
+    public static void checkEncryptionBox() {
+        if (encryptionCheckBox.isSelected()) {
+            WPAButton.setSelected(true);
+            WPAButton.setEnabled(true);
+            WEPButton.setEnabled(true);
+            encryptionKeyTextField.setEnabled(true);
+        } else {
+            WPAButton.setEnabled(false);
+            WEPButton.setEnabled(false);
+            encryptionKeyTextField.setEnabled(false);
+        }      
+    }
+    
+    public static boolean root() {
         String Suid = Executor.read(Command.getUID());
         try {
             uid = Integer.parseInt(Suid);
@@ -48,36 +80,20 @@ public class BlipGUI extends javax.swing.JFrame {
         } catch (NumberFormatException n) {
             Log.severe("Recieved unrecognized uid!");
         }
-        centerWindow();
-        initComponents();
         if(uid != 0) {
             JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
-        } else {
-            Thread conTest = new ConnectionTester();
-            conTest.start();
-            Thread exe = new Executor();
-            exe.start();
-            settings = new File("/etc/blip.conf");
-            if(!settings.exists()) {
-                try {
-                    settings.createNewFile();
-                    Log.info("Created empty settings file in /etc/blip.conf");
-                } catch (IOException ex) {
-                    Log.severe("Could not create settings file!");
-                    progressLabel.setText("Could not create settings file!");
-                }
-            } else {
-                loadSettings();
-            }
-        }        
+        }
+        return true;
     }
     
-    public void initTray() {
+    public static void initTray() {
         trayIcon = null;
         if(SystemTray.isSupported()) {
             Log.info("System tray supported.");
             SystemTray tray = SystemTray.getSystemTray();
+        } else {
+            Log.warning("System tray not supported");
         }
     }
     
@@ -93,8 +109,19 @@ public class BlipGUI extends javax.swing.JFrame {
         progress.setValue(val);
     }
     
-    private void loadSettings() {
-        
+    public static String getEssid() {
+        if (ESSIDField.getText().length() > 0) {
+            return ESSIDField.getText();
+        }
+        return null;
+    }
+    
+    public static void enableConnection(boolean b) {
+        connectButton.setEnabled(b);
+    }
+    
+    public static void enableDisconnect(boolean b) {
+        disconnectButton.setEnabled(b);
     }
 
     /**
@@ -259,11 +286,11 @@ public class BlipGUI extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(connectButton)
                     .addComponent(disconnectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(66, 66, 66))
+                .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(84, 84, 84))
         );
 
         jTabbedPane1.addTab("Connect", jPanel1);
@@ -283,17 +310,7 @@ public class BlipGUI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void encryptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_encryptionCheckBoxActionPerformed
-        JCheckBox box = (JCheckBox) evt.getSource();
-        if (box.isSelected()) {
-            WPAButton.setSelected(true);
-            WPAButton.setEnabled(true);
-            WEPButton.setEnabled(true);
-            encryptionKeyTextField.setEnabled(true);
-        } else if (!box.isSelected()) {
-            WPAButton.setEnabled(false);
-            WEPButton.setEnabled(false);
-            encryptionKeyTextField.setEnabled(false);
-        }
+        checkEncryptionBox();
     }//GEN-LAST:event_encryptionCheckBoxActionPerformed
 
     private void disconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_disconnectButtonActionPerformed
@@ -314,63 +331,52 @@ public class BlipGUI extends javax.swing.JFrame {
     }//GEN-LAST:event_disconnectButtonActionPerformed
 
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
-        int ping = Executor.execute(Command.ping());
-        if(ping == 0) {
-            progressLabel.setText("You are already connected to the internet =)");
-            return;
-        }
-        if (InterfaceField.getText().length() == 0) {
-            progressLabel.setText("Interface undefined");
-            return;
-        }
-        if (ESSIDField.getText().length() == 0) {
-            progressLabel.setText("ESSID unspecified");
-            return;
-        }
-        if(encryptionCheckBox.isSelected()) {
-            if (encryptionKeyTextField.getText().length() == 0) {
-                progressLabel.setText("Encryption key unspecified");
+        if (!missingFields()) {
+            progress.setIndeterminate(true);
+            if (!setInterfaceUp()) {
                 return;
             }
-        }
-        progress.setIndeterminate(true);
-        
-        //Put interface up
-        inter = InterfaceField.getText();
-        progressLabel.setText("Putting " + inter + " up...");
-        Executor.execute(Command.setInterfaceDown(inter));
-        status = Executor.execute(Command.setInterfaceUp(inter));
-        if (status != 0) {
-            Log.severe("Couldn't put " + inter + " up.");
-            progressLabel.setText("Couldn't put " + inter + " up");
-            progress.setIndeterminate(false);
-            return;
-        } else {
-            Log.info("Put " + inter + " up");
-        }     
-        
-        //Connect to essid
-        essid = ESSIDField.getText();
-        progressLabel.setText("Connecting to " + essid);        
-        status = Executor.execute(Command.connectToESSID(inter, essid));
-        if (status != 0) {
-            Log.severe("Couldn't connect to " + essid);
-            progressLabel.setText("Couldn't connect to " + essid);
-            progress.setIndeterminate(false);
-            return;
-        } else {
-            Log.info("Connected to " + essid);
-        }
-        
-        //Kill dhcpcd
-        Executor.execute(Command.killdhcpcd());
-        if (encryptionCheckBox.isSelected()) {
-            if(WPAButton.isSelected()) {
-                handleWPA();
+            if (!connectToESSID()) {
+                return;
             }
-        }
+            if (encryptionCheckBox.isSelected()) {
+                if(WPAButton.isSelected()) {
+                    handleWPA();
+                }
+            }
+        }    
     }//GEN-LAST:event_connectButtonActionPerformed
-
+    
+    private boolean connectToESSID() {
+            essid = ESSIDField.getText();
+            progressLabel.setText("Connecting to " + essid);        
+            status = Executor.execute(Command.connectToESSID(inter, essid));
+            if (status != 0) {
+                Log.severe("Couldn't connect to " + essid);
+                progressLabel.setText("Couldn't connect to " + essid);
+                progress.setIndeterminate(false);
+                return false;
+            }
+            Log.info("Connected to " + essid);
+            return true;
+    }
+    
+    private boolean setInterfaceUp() {
+            inter = InterfaceField.getText();
+            progressLabel.setText("Putting " + inter + " up...");
+            Executor.execute(Command.setInterfaceDown(inter));
+            status = Executor.execute(Command.setInterfaceUp(inter));
+            if (status != 0) {
+                Log.severe("Couldn't put " + inter + " up.");
+                progressLabel.setText("Couldn't put " + inter + " up");
+                progress.setIndeterminate(false);
+                return false;
+            }
+            Log.info("Put " + inter + " up");
+            return true;
+            
+    }
+    
     private void handleWPA() {
         File wpa = new File("/etc/wpa_supplicant.conf");
         if (wpa.exists()) {
@@ -387,6 +393,24 @@ public class BlipGUI extends javax.swing.JFrame {
             Log.info("wpa_supplicant file not found");
            // create wpa_supplicant file... 
         }
+    }
+    
+    private boolean missingFields() {
+        if (InterfaceField.getText().length() == 0) {
+            progressLabel.setText("Interface undefined");
+            return true;
+        }
+        if (ESSIDField.getText().length() == 0) {
+            progressLabel.setText("ESSID unspecified");
+            return true;
+        }
+        if(encryptionCheckBox.isSelected()) {
+            if (encryptionKeyTextField.getText().length() == 0) {
+                progressLabel.setText("Encryption key unspecified");
+                return true;
+            }
+        }
+        return false;
     }
     
     private void startDHCP() {
@@ -454,19 +478,21 @@ public class BlipGUI extends javax.swing.JFrame {
             public void run() {
                 Log l = new Log();
                 new BlipGUI().setVisible(true);
+                init();
+                initTray();
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextField ESSIDField;
+    private static javax.swing.JTextField ESSIDField;
     private javax.swing.JTextField InterfaceField;
-    private javax.swing.JRadioButton WEPButton;
-    private javax.swing.JRadioButton WPAButton;
-    private javax.swing.JButton connectButton;
-    private javax.swing.JButton disconnectButton;
+    private static javax.swing.JRadioButton WEPButton;
+    private static javax.swing.JRadioButton WPAButton;
+    private static javax.swing.JButton connectButton;
+    private static javax.swing.JButton disconnectButton;
     private javax.swing.ButtonGroup encryptionButtonGroup;
-    private javax.swing.JCheckBox encryptionCheckBox;
-    private javax.swing.JTextField encryptionKeyTextField;
+    private static javax.swing.JCheckBox encryptionCheckBox;
+    private static javax.swing.JTextField encryptionKeyTextField;
     private static final javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
