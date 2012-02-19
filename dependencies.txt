@@ -1,0 +1,3 @@
+Known dependencies:
+
+coreutils java iputils wpa_supplicant dhcpcd iproute2 wireless_tools
