@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
  *
  * @author seed419
  */
-public class Executor {
+public class Executor implements Runnable{
     
     
     private static Process proc;
@@ -84,5 +84,10 @@ public class Executor {
             }
         }
         return line;
-    }    
+    }
+
+    @Override
+    public void run() {
+        this.run();
+    }
 }

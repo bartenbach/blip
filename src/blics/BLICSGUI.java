@@ -18,6 +18,9 @@ package blics;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JCheckBox;
 import javax.swing.JOptionPane;
 
@@ -34,6 +37,7 @@ public class BLICSGUI extends javax.swing.JFrame {
     private String essid;
     private int uid = 999;
     private int status = 999;
+    private File settings;
 
     
     /**
@@ -52,7 +56,31 @@ public class BLICSGUI extends javax.swing.JFrame {
         if(uid != 0) {
             JOptionPane.showMessageDialog(null, "You must run blics as root!", "Blics", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
+        } else {
+            status = Executor.execute(Command.ping());
+            if (status == 0) {
+                progressLabel.setText("Currently Connected");
+                progress.setValue(100);
+            } else {
+                progressLabel.setText("Not Connected");
+            }
+            settings = new File("/etc/blics.conf");
+            if(!settings.exists()) {
+                try {
+                    settings.createNewFile();
+                    Log.info("Created empty settings file in /etc/blics.conf");
+                } catch (IOException ex) {
+                    Log.severe("Could not create settings file!");
+                    progressLabel.setText("Could not create settings file!");
+                }
+            } else {
+                loadSettings();
+            }
         }        
+    }
+    
+    private void loadSettings() {
+        
     }
 
     /**
