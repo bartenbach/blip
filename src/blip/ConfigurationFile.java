@@ -24,6 +24,7 @@ public class ConfigurationFile {
                 Log.severe("Could not create settings file!");
             }
         } else {
+            Log.debug("Configuration file found");
             loadSettings();
         }
    }
@@ -50,6 +51,7 @@ public class ConfigurationFile {
         } else {
             BlipUI.setEncrypted(false);
         }
+        Log.debug("Settings loaded.");
     }
     
     public void saveSettings() throws IOException {

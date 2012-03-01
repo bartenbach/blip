@@ -12,12 +12,11 @@ as you attribute the author(s) of this license document / files.
 package blip;
 
 import java.awt.Dimension;
-import java.awt.SystemTray;
 import java.awt.Toolkit;
-import java.awt.TrayIcon;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
 
 /**
@@ -27,16 +26,16 @@ import javax.swing.JOptionPane;
 public class BlipUI extends javax.swing.JFrame {
     
     
-    private static final String version = "0.2 Alpha";
+    private static final String version = "0.3 Alpha";
     private static final long serialVersionUID = 1L;
     private String inter;
     private String essid;
     private static int uid = 999;
     private int status = 999;
     private File settings;
-    private static TrayIcon trayIcon;
     private static ConfigurationFile config;
     private static Thread conTest;
+    private static TrayHandler th;
 
     
     /**
@@ -52,9 +51,12 @@ public class BlipUI extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         } else {
+            th = new TrayHandler();
+            th.initTray();
             Log.info("Starting threads");
-            conTest = new ConnectionTester();
+            conTest = new ConnectionTester(th);
             conTest.start();
+            Log.debug("Connection Tester started");
             try {
                 config = new ConfigurationFile();
             } catch (FileNotFoundException ex) {
@@ -82,7 +84,9 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     public static boolean root() {
+        Log.debug("Checking for root...");
         String Suid = Executor.read(Command.getUID());
+        Log.debug("Returned from root check");
         try {
             uid = Integer.parseInt(Suid);
             Log.info("UID: " + uid);
@@ -94,16 +98,6 @@ public class BlipUI extends javax.swing.JFrame {
             System.exit(0);
         }
         return true;
-    }
-    
-    public static void initTray() {
-        trayIcon = null;
-        if(SystemTray.isSupported()) {
-            Log.info("System tray supported.");
-            SystemTray tray = SystemTray.getSystemTray();
-        } else {
-            Log.warning("System tray not supported");
-        }
     }
     
     public static void setProgressLabel(String text) {
@@ -164,7 +158,7 @@ public class BlipUI extends javax.swing.JFrame {
         progressLabel = new javax.swing.JLabel();
         connectButton = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(HIDE_ON_CLOSE);
 
         jLabel2.setFont(new java.awt.Font("SansSerif", 1, 12)); // NOI18N
         jLabel2.setText("ESSID");
@@ -331,27 +325,18 @@ public class BlipUI extends javax.swing.JFrame {
             progressLabel.setText("Interface undefined");
             return;
         } 
-        inter = InterfaceField.getText();
-        Log.info("Setting interface down");
-        Executor.execute(Command.setInterfaceDown(inter));
-        Log.info("Shutting down dhcpcd");
-        Executor.execute(Command.killdhcpcd());
-        Log.info("Shutting down wpa_supplicant");
-        Executor.execute(Command.killWpa_Supplicant());
+        shutEverythingDown();
         Log.info("Disconnected.");
         connectButton.setEnabled(true);
         disconnectButton.setEnabled(false);
         progressLabel.setText("Not connected");
         progress.setValue(0);
-        
     }//GEN-LAST:event_disconnectButtonActionPerformed
 
     private void connectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_connectButtonActionPerformed
         if (!missingFields()) {
             progress.setIndeterminate(true);
-            Executor.execute(Command.killdhcpcd());
-            Executor.execute(Command.setInterfaceDown(inter));
-            Executor.execute(Command.killWpa_Supplicant());
+            shutEverythingDown();
             if (!setInterfaceUp()) {
                 return;
             }
@@ -371,6 +356,16 @@ public class BlipUI extends javax.swing.JFrame {
             }
         }    
     }//GEN-LAST:event_connectButtonActionPerformed
+    
+    private void shutEverythingDown() {
+        inter = InterfaceField.getText();
+        Log.info("Setting interface down");
+        Executor.execute(Command.setInterfaceDown(inter));
+        Log.info("Shutting down dhcpcd");
+        Executor.execute(Command.killdhcpcd());
+        Log.info("Shutting down wpa_supplicant");
+        Executor.execute(Command.killWpa_Supplicant());
+    }
     
     private void hideEncryptionKey() {
         StringBuilder sb = new StringBuilder();
@@ -459,13 +454,20 @@ public class BlipUI extends javax.swing.JFrame {
         Log.info("Starting DHCPCD");
         progressLabel.setText("Starting dhcpcd...");
         status = Executor.execute(Command.dhcpcd(inter));
-        if (status != 0) {
-            Log.severe("Couldn't start dhcpcd");
-            progressLabel.setText("Couldn't start dhcpcd");
-            progress.setIndeterminate(false);
-            return;
+        try {
+            Thread.sleep(5000);
+        } catch (Exception ex) {
+            Log.debug("Couldn't sleep!");
         }
-        Log.info("Dhcpcd started successfully");
+        
+        //This is creating incredibly embarassing results..
+//        if (status != 0) {
+//            Log.severe("Couldn't start dhcpcd");
+//            progressLabel.setText("Couldn't start dhcpcd");
+//            progress.setIndeterminate(false);
+//            return;
+//        }
+//        Log.info("Dhcpcd started successfully");
 //        try {
 //            conTest.sleep(10000);
 //        } catch (InterruptedException ex) {
@@ -525,6 +527,14 @@ public class BlipUI extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
+        Log l = new Log();
+        if (args.length > 0) {
+            String arg = args[0];
+            if (arg.equalsIgnoreCase("debug")) {
+                Log.setLevel(Level.FINEST);
+                Log.debug("Debug enabled");
+            }
+        }
         /*
          * Set the Nimbus look and feel
          */
@@ -559,10 +569,8 @@ public class BlipUI extends javax.swing.JFrame {
 
             @Override
             public void run() {
-                Log l = new Log();
                 new BlipUI().setVisible(true);
                 init();
-                initTray();
             }
         });
     }

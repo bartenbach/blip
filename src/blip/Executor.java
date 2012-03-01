@@ -18,6 +18,7 @@ package blip;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import javax.swing.SwingWorker;
 
 /**
  *
@@ -31,6 +32,7 @@ public class Executor extends Thread {
     private static Process proc;
     private static BufferedReader br;
     private static String command;
+    private SwingWorker<Integer,String> worker;
     
     
     public Executor() {
@@ -40,18 +42,22 @@ public class Executor extends Thread {
     
     public static int execute(String command) {
         try {
+            Log.debug("Executing command");
             proc = Runtime.getRuntime().exec(command);
+            Log.debug("Command executed");
             br = new BufferedReader(new InputStreamReader(proc.getInputStream()));        
         } catch (IOException ex) {
             Log.severe("Couldn't connect to shell!");
         }
         try {
+            Log.debug("Watiing for process...");
             proc.waitFor();
+            Log.debug("Process complete.");
         } catch (InterruptedException ex) {
             Log.warning("Process Interrupted");
         }finally{
             try {
-            br.close();
+                br.close();
             } catch (IOException e) {
                 Log.warning("Couldn't close BufferedReader");
             }
@@ -87,10 +93,5 @@ public class Executor extends Thread {
             }
         }
         return line;
-    }
-
-    @Override
-    public void run() {
-
     }
 }

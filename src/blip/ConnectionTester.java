@@ -19,15 +19,24 @@ public class ConnectionTester extends Thread {
     
     private boolean connection;
     private static boolean lastConnect;
-
+    private TrayHandler th;
+    private int failedPings;
+    
+    public ConnectionTester(TrayHandler th) {
+        this.th = th;
+        failedPings = 0;
+    }
+    
     @Override
     public void run() {
         while (true) {
             try {
+                Log.debug("Testing Connection...");
                 connection = testConnection();
                 if(!connection) {
                     if (lastConnect != connection) {
                     Log.info("Not connected.");
+                    th.setIconDisconnected();
                     BlipUI.setProgressLabel("Not connected");
                     BlipUI.setProgressBar(false);
                     BlipUI.enableDisconnect(false);
@@ -39,6 +48,7 @@ public class ConnectionTester extends Thread {
                 } else {
                     if (lastConnect != connection) {
                     Log.info("Connected.");
+                    th.setIconConnected();
                     BlipUI.enableConnection(false);
                     BlipUI.enableDisconnect(true);
                     if(BlipUI.getEssid() != null) {
@@ -59,15 +69,20 @@ public class ConnectionTester extends Thread {
     }
     
     public boolean testConnection() {
+        Log.debug("Pinging...");
         int status = Executor.execute(Command.ping());
+        Log.debug("Pinged");
         if(status != 0) {
-            return false;
+            failedPings++;
+            if (failedPings > 1) {
+                Log.debug("Not connected");
+                return false;
+            } else {
+                return true;
+            }
         }
+        failedPings = 0;
+        Log.debug("Connected");
         return true;
     }
-    
-//    public void sleep(int milli) {
-//        this.sleep(milli);
-//    }
-    
 }
