@@ -14,10 +14,8 @@ package blip;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -30,13 +28,9 @@ public class BlipUI extends javax.swing.JFrame {
     private static final long serialVersionUID = 1L;
     private String inter;
     private String essid;
-    private static int uid = 999;
     private int status = 999;
-    private File settings;
-    private static ConfigurationFile config;
-    private static Thread conTest;
-    private static TrayHandler th;
-
+    private ConfigurationFile config;
+    private UIHandler u;
     
     /**
      * Creates new form blip
@@ -44,33 +38,11 @@ public class BlipUI extends javax.swing.JFrame {
     public BlipUI() {
         centerWindow();
         initComponents();
+        u = new UIHandler(this);
+        u.init();
     }
     
-    public static void init() {
-        if(!root()) {
-            JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        } else {
-            th = new TrayHandler();
-            th.initTray();
-            Log.info("Starting threads");
-            conTest = new ConnectionTester(th);
-            conTest.start();
-            Log.debug("Connection Tester started");
-            try {
-                config = new ConfigurationFile();
-            } catch (FileNotFoundException ex) {
-                Log.severe("Configuration file not found");
-            } catch (IOException ex) {
-                Log.severe("Couldn't read configuration file");
-            }
-            Thread exe = new Executor();
-            exe.start();
-            checkEncryptionBox();
-        }      
-    }
-    
-    public static void checkEncryptionBox() {
+    public void checkEncryptionBox() {
         if (encryptionCheckBox.isSelected()) {
             WPAButton.setSelected(true);
             WPAButton.setEnabled(true);
@@ -83,52 +55,40 @@ public class BlipUI extends javax.swing.JFrame {
         }      
     }
     
-    public static boolean root() {
-        Log.debug("Checking for root...");
-        String Suid = Executor.read(Command.getUID());
-        Log.debug("Returned from root check");
-        try {
-            uid = Integer.parseInt(Suid);
-            Log.info("UID: " + uid);
-        } catch (NumberFormatException n) {
-            Log.severe("Recieved unrecognized uid!");
-        }
-        if(uid != 0) {
-            JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
-            System.exit(0);
-        }
-        return true;
-    }
-    
-    public static void setProgressLabel(String text) {
+    public void setProgressLabel(String text) {
         progressLabel.setText(text);
     }
     
-    public static void setProgressBar(Boolean bool) {
+    public void setProgressBar(Boolean bool) {
         progress.setIndeterminate(bool);
     }
     
-    public static void setProgressValue(int val) {
+    public void setProgressValue(int val) {
         progress.setValue(val);
     }
     
-    public static String getEssid() {
-        if (ESSIDField.getText().length() > 0) {
-            return ESSIDField.getText();
-        }
-        return null;
+    public String getEssid() {
+        return essidBox.getSelectedItem().toString();
     }
     
-    public static void setEssid(String essid) {
-        ESSIDField.setText(essid);
+    public void addEssid(String essid) {
+        essidBox.addItem(essid);
     }
     
-    public static void enableConnection(boolean b) {
+//    public void setEssid(String essid) {
+//        ESSIDField.setText(essid);
+//    }
+    
+    public void enableConnection(boolean b) {
         connectButton.setEnabled(b);
     }
     
-    public static void enableDisconnect(boolean b) {
+    public void enableDisconnect(boolean b) {
         disconnectButton.setEnabled(b);
+    }
+    
+    public void addToInterfaceBox(String x) {
+        interfaceBox.addItem(x);
     }
 
     /**
@@ -144,9 +104,7 @@ public class BlipUI extends javax.swing.JFrame {
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
-        ESSIDField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
-        InterfaceField = new javax.swing.JTextField();
         disconnectButton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         WEPButton = new javax.swing.JRadioButton();
@@ -157,6 +115,8 @@ public class BlipUI extends javax.swing.JFrame {
         progress = new javax.swing.JProgressBar();
         progressLabel = new javax.swing.JLabel();
         connectButton = new javax.swing.JButton();
+        interfaceBox = new javax.swing.JComboBox();
+        essidBox = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(HIDE_ON_CLOSE);
 
@@ -168,9 +128,6 @@ public class BlipUI extends javax.swing.JFrame {
 
         jLabel3.setFont(new java.awt.Font("SansSerif", 1, 12)); // NOI18N
         jLabel3.setText("Interface");
-
-        InterfaceField.setFont(new java.awt.Font("SansSerif", 0, 12)); // NOI18N
-        InterfaceField.setText("wlan0");
 
         disconnectButton.setText("Disconnect");
         disconnectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -247,32 +204,33 @@ public class BlipUI extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addComponent(connectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(disconnectButton)
-                        .addGap(32, 32, 32))
-                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(InterfaceField, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(progressLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                .addGap(26, 26, 26)
+                                .addComponent(connectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(disconnectButton)
+                                .addGap(32, 32, 32))
+                            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGap(31, 31, 31)
-                                    .addComponent(ESSIDField, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-            .addComponent(progress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(interfaceBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(essidBox, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(53, 53, 53))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -282,18 +240,20 @@ public class BlipUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(InterfaceField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(interfaceBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ESSIDField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(essidBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(connectButton)
-                    .addComponent(disconnectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(disconnectButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(connectButton)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(progress, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progressLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -321,10 +281,6 @@ public class BlipUI extends javax.swing.JFrame {
     }//GEN-LAST:event_encryptionCheckBoxActionPerformed
 
     private void disconnectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_disconnectButtonActionPerformed
-        if (InterfaceField.getText().length() == 0) {
-            progressLabel.setText("Interface undefined");
-            return;
-        } 
         shutEverythingDown();
         Log.info("Disconnected.");
         connectButton.setEnabled(true);
@@ -358,13 +314,14 @@ public class BlipUI extends javax.swing.JFrame {
     }//GEN-LAST:event_connectButtonActionPerformed
     
     private void shutEverythingDown() {
-        inter = InterfaceField.getText();
-        Log.info("Setting interface down");
-        Executor.execute(Command.setInterfaceDown(inter));
-        Log.info("Shutting down dhcpcd");
-        Executor.execute(Command.killdhcpcd());
-        Log.info("Shutting down wpa_supplicant");
-        Executor.execute(Command.killWpa_Supplicant());
+        inter = interfaceBox.getSelectedItem().toString();
+        Log.debug("Setting " + inter + " down");
+        Log.debug("Setting interface down");
+        Command.setInterfaceDown(inter);
+        Log.debug("Shutting down dhcpcd");
+        Command.killdhcpcd();
+        Log.debug("Shutting down wpa_supplicant");
+        Command.killWpa_Supplicant();
     }
     
     private void hideEncryptionKey() {
@@ -376,7 +333,7 @@ public class BlipUI extends javax.swing.JFrame {
         encryptionKeyTextField.setText(sb.toString());
     }
     
-    public static void setPrivateEncryptionKey(int length) {
+    public void setPrivateEncryptionKey(int length) {
         StringBuilder sb = new StringBuilder();
         for(int i=0;i<length;i++) {
             sb.append("*");
@@ -385,9 +342,10 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     private boolean connectToESSID() {
-            essid = ESSIDField.getText();
-            progressLabel.setText("Connecting to " + essid);        
-            status = Executor.execute(Command.connectToESSID(inter, essid));
+            essid = essidBox.getSelectedItem().toString();
+            progressLabel.setText("Connecting to " + essid); 
+//            Executor.getInstance().addToQueue(Command.connectToESSID(inter, essid));
+//            status = Executor.getInstance().getStatus();
             if (status != 0) {
                 Log.severe("Couldn't connect to " + essid);
                 progressLabel.setText("Couldn't connect to " + essid);
@@ -399,9 +357,10 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     private boolean setInterfaceUp() {
-            inter = InterfaceField.getText();
+            inter = interfaceBox.getSelectedItem().toString();
             progressLabel.setText("Putting " + inter + " up...");
-            status = Executor.execute(Command.setInterfaceUp(inter));
+//            Executor.getInstance().addToQueue(Command.setInterfaceUp(inter));
+//            status = Executor.getInstance().getStatus();
             if (status != 0) {
                 Log.severe("Couldn't put " + inter + " up.");
                 progressLabel.setText("Couldn't put " + inter + " up");
@@ -417,7 +376,8 @@ public class BlipUI extends javax.swing.JFrame {
         File wpa = new File("/etc/wpa_supplicant.conf");
         if (wpa.exists()) {
             Log.info("wpa_supplicant.conf found");
-            status = Executor.execute(Command.startWpa_Supplicant(inter));
+//            Executor.getInstance().addToQueue(Command.startWpa_Supplicant(inter));
+//            status = Executor.getInstance().getStatus();
             if (status != 0) {
                 Log.severe("Couldn't start wpa_supplicant!");
                 progressLabel.setText("Couldn't start wpa_supplicant");
@@ -433,14 +393,6 @@ public class BlipUI extends javax.swing.JFrame {
     }
     
     private boolean missingFields() {
-        if (InterfaceField.getText().length() == 0) {
-            progressLabel.setText("Interface undefined");
-            return true;
-        }
-        if (ESSIDField.getText().length() == 0) {
-            progressLabel.setText("ESSID unspecified");
-            return true;
-        }
         if(encryptionCheckBox.isSelected()) {
             if (encryptionKeyTextField.getText().length() == 0) {
                 progressLabel.setText("Encryption key unspecified");
@@ -453,7 +405,8 @@ public class BlipUI extends javax.swing.JFrame {
     private void startDHCP() {
         Log.info("Starting DHCPCD");
         progressLabel.setText("Starting dhcpcd...");
-        status = Executor.execute(Command.dhcpcd(inter));
+//        Executor.getInstance().addToQueue(Command.dhcpcd(inter));
+        //status = Executor.execute(Command.dhcpcd(inter));
         try {
             Thread.sleep(5000);
         } catch (Exception ex) {
@@ -483,43 +436,43 @@ public class BlipUI extends javax.swing.JFrame {
         this.setLocation(width, height);       
     }
     
-    public static String getInterface() {
-        return InterfaceField.getText();
+    public int getInterface() {
+        return interfaceBox.getSelectedIndex();
     }
     
-    public static void setInterface(String inter) {
-        InterfaceField.setText(inter);
+    public void setInterface(int index) {
+        interfaceBox.setSelectedIndex(index);
     }
     
-    public static boolean isEncrypted() {
+    public boolean isEncrypted() {
         return encryptionCheckBox.isSelected();
     }
     
-    public static void setEncrypted(boolean b) {
+    public void setEncrypted(boolean b) {
         encryptionCheckBox.setSelected(b);
     }
     
-    public static boolean isWPA() {
+    public boolean isWPA() {
         return WPAButton.isSelected();
     }
     
-    public static void setWPA(boolean b) {
+    public void setWPA(boolean b) {
         WPAButton.setSelected(b);
     }
     
-    public static boolean isWEP() {
+    public boolean isWEP() {
         return WEPButton.isSelected();
     }
     
-    public static void setWEP(boolean b) {
+    public void setWEP(boolean b) {
         WEPButton.setSelected(b);
     }
     
-    public static String getEncryptionKey() {
+    public String getEncryptionKey() {
         return encryptionKeyTextField.getText();
     }
     
-    public static void setEncryptionKey(String key) {
+    public void setEncryptionKey(String key) {
         encryptionKeyTextField.setText(key);
     }
     
@@ -570,13 +523,14 @@ public class BlipUI extends javax.swing.JFrame {
             @Override
             public void run() {
                 new BlipUI().setVisible(true);
-                init();
             }
         });
     }
+    
+    public void setUIVisible(Boolean b) {
+        this.setVisible(true);
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private static javax.swing.JTextField ESSIDField;
-    private static javax.swing.JTextField InterfaceField;
     private static javax.swing.JRadioButton WEPButton;
     private static javax.swing.JRadioButton WPAButton;
     private static javax.swing.JButton connectButton;
@@ -584,6 +538,8 @@ public class BlipUI extends javax.swing.JFrame {
     private javax.swing.ButtonGroup encryptionButtonGroup;
     private static javax.swing.JCheckBox encryptionCheckBox;
     private static javax.swing.JTextField encryptionKeyTextField;
+    private javax.swing.JComboBox essidBox;
+    private javax.swing.JComboBox interfaceBox;
     private static final javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

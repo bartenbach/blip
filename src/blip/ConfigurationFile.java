@@ -13,8 +13,10 @@ import java.io.*;
 public class ConfigurationFile {
     
     private File settings;
+    private BlipUI blip;
     
-    public ConfigurationFile() throws FileNotFoundException, IOException {
+    public ConfigurationFile(BlipUI blip) throws FileNotFoundException, IOException {
+        this.blip = blip;
         settings = new File("/etc/blip.conf");
         if (!settings.exists()) {
             try {
@@ -29,29 +31,36 @@ public class ConfigurationFile {
         }
    }
     private void loadSettings() throws FileNotFoundException, IOException {
-        BufferedReader br = new BufferedReader(new FileReader(settings));
-        StringBuilder sb = new StringBuilder();
-        String line;
-        while ((line = br.readLine()) != null) {
-            if (!line.startsWith("#")) {
-                sb.append(line);
-            }
-        }
-        String[] configLine = sb.toString().split(":");
-        BlipUI.setInterface(configLine[0]);
-        BlipUI.setEssid(configLine[1]);
-        if (configLine[2].equalsIgnoreCase("true")) {
-            BlipUI.setEncrypted(true);
-            if (configLine[3].equalsIgnoreCase("WPA")) {
-                BlipUI.setWPA(true);
-            } else {
-                BlipUI.setWEP(true);
-            }
-            BlipUI.setPrivateEncryptionKey(Integer.parseInt(configLine[4]));
-        } else {
-            BlipUI.setEncrypted(false);
-        }
-        Log.debug("Settings loaded.");
+//        BufferedReader br = new BufferedReader(new FileReader(settings));
+//        StringBuilder sb = new StringBuilder();
+//        String line;
+//        while ((line = br.readLine()) != null) {
+//            if (!line.startsWith("#")) {
+//                sb.append(line);
+//            }
+//        }
+//        if (sb.toString() != null) {
+//            String[] configLine = sb.toString().split(":");
+//            if (configLine[0].length() != 0) {
+//                blip.setInterface(Integer.parseInt(configLine[0]));
+//                //TODO Oh boy...
+//                //blip.setEssid(configLine[1]);
+//                if (configLine[2].equalsIgnoreCase("true")) {
+//                    blip.setEncrypted(true);
+//                    if (configLine[3].equalsIgnoreCase("WPA")) {
+//                        blip.setWPA(true);
+//                    } else {
+//                        blip.setWEP(true);
+//                    }
+//                    blip.setPrivateEncryptionKey(Integer.parseInt(configLine[4]));
+//                } else {
+//                    blip.setEncrypted(false);
+//                }
+//            Log.debug("Settings loaded.");
+//            }
+//        } else {
+//            Log.debug("Settings file empty.");
+//        }
     }
     
     public void saveSettings() throws IOException {
@@ -59,16 +68,16 @@ public class ConfigurationFile {
         out.println("#blip configuration file");
         out.println("#");
         out.println("#Saved Settings:");
-        out.write(BlipUI.getInterface() + ":");
-        out.write(BlipUI.getEssid() + ":");
-        if (BlipUI.isEncrypted()) {
+        out.write(blip.getInterface() + ":");
+        out.write(blip.getEssid() + ":");
+        if (blip.isEncrypted()) {
             out.write("true:" );
-            if (BlipUI.isWPA()) {
+            if (blip.isWPA()) {
                 out.write("WPA:");
             } else {
                 out.write("WEP:");
             }
-            out.write(BlipUI.getEncryptionKey().length() + ":");
+            out.write(blip.getEncryptionKey().length() + ":");
         } else {
             out.write("false:");
         }

@@ -24,23 +24,26 @@ import javax.swing.SwingWorker;
  *
  * @author seed419
  */
-public class Executor extends Thread {
-    
-    //TODO This absolutely needs to run in a separate thread.
+public class Executor extends SwingWorker<Integer, String> {
     
     
     private static Process proc;
     private static BufferedReader br;
-    private static String command;
-    private SwingWorker<Integer,String> worker;
+    private String command;
     
     
-    public Executor() {
+    public Executor(String command) {
         proc = null;
-        br = null;   
+        br = null;
+        this.command = command;
     }
     
-    public static int execute(String command) {
+    @Override
+    protected Integer doInBackground() throws Exception {
+        return execute(command);
+    }
+    
+    private Integer execute(String command) {
         try {
             Log.debug("Executing command");
             proc = Runtime.getRuntime().exec(command);
@@ -65,33 +68,8 @@ public class Executor extends Thread {
         return proc.exitValue();
     }
     
-    public static String read(String command) {
-        String line = null;
-        try {
-            proc = Runtime.getRuntime().exec(command);
-            br = new BufferedReader(new InputStreamReader(proc.getInputStream()));        
-        } catch (IOException ex) {
-            Log.severe("Couldn't connect to shell!");
-        }
-        try {
-            proc.waitFor();
-        } catch (InterruptedException ex) {
-            Log.warning("Process Interrupted");
-        }
-        try {
-            if (br.ready()) {
-                line = br.readLine();
-            }
-        } catch (IOException e) {
-            Log.warning("Couldn't read from the shell");
-        }
-        finally{
-            try {
-            br.close();
-            } catch (IOException e) {
-                Log.warning("Couldn't close BufferedReader");
-            }
-        }
-        return line;
-    }
+//    @Override 
+//    protected void done() {
+//        this.command = null;
+//    }
 }

@@ -11,18 +11,26 @@ as you attribute the author(s) of this license document / files.
  */
 package blip;
 
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author seed419
  */
 public class ConnectionTester extends Thread {
     
+    
     private boolean connection;
     private static boolean lastConnect;
     private TrayHandler th;
     private int failedPings;
+    private BlipUI blip;
     
-    public ConnectionTester(TrayHandler th) {
+    
+    public ConnectionTester(BlipUI blip, TrayHandler th) {
+        this.blip = blip;
         this.th = th;
         failedPings = 0;
     }
@@ -37,32 +45,32 @@ public class ConnectionTester extends Thread {
                     if (lastConnect != connection) {
                     Log.info("Not connected.");
                     th.setIconDisconnected();
-                    BlipUI.setProgressLabel("Not connected");
-                    BlipUI.setProgressBar(false);
-                    BlipUI.enableDisconnect(false);
-                    BlipUI.enableConnection(true);
-                    BlipUI.setProgressBar(false);
-                    BlipUI.setProgressValue(0);
+                    blip.setProgressLabel("Not connected");
+                    blip.setProgressBar(false);
+                    blip.enableDisconnect(false);
+                    blip.enableConnection(true);
+                    blip.setProgressBar(false);
+                    blip.setProgressValue(0);
                     lastConnect = false;                    
                     }
                 } else {
                     if (lastConnect != connection) {
                     Log.info("Connected.");
                     th.setIconConnected();
-                    BlipUI.enableConnection(false);
-                    BlipUI.enableDisconnect(true);
-                    if(BlipUI.getEssid() != null) {
-                        BlipUI.setProgressLabel("Connected to " + BlipUI.getEssid());
+                    blip.enableConnection(false);
+                    blip.enableDisconnect(true);
+                    if(blip.getEssid() != null) {
+                        blip.setProgressLabel("Connected to " + blip.getEssid());
                     } else {
-                        BlipUI.setProgressLabel("Connected");
+                        blip.setProgressLabel("Connected");
                     }
-                    BlipUI.setProgressBar(false);
-                    BlipUI.setProgressValue(100);
+                    blip.setProgressBar(false);
+                    blip.setProgressValue(100);
                     lastConnect = true;                     
                     }                   
                 }
                 Thread.sleep(5000);                
-            } catch (InterruptedException ex) {
+            } catch (Exception ex) {
                 Log.warning("Connection test thread interrupted");
             }
         }
@@ -70,7 +78,16 @@ public class ConnectionTester extends Thread {
     
     public boolean testConnection() {
         Log.debug("Pinging...");
-        int status = Executor.execute(Command.ping());
+        Executor pinger = new Executor(Command.ping());
+        pinger.execute();
+        int status = 0;
+        try {
+            status = pinger.get();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ConnectionTester.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ExecutionException ex) {
+            Logger.getLogger(ConnectionTester.class.getName()).log(Level.SEVERE, null, ex);
+        }
         Log.debug("Pinged");
         if(status != 0) {
             failedPings++;

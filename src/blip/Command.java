@@ -15,6 +15,12 @@ as you attribute the author(s) of this license document / files.
  */
 package blip;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author seed419
@@ -26,8 +32,9 @@ public class Command {
         return "ip link set " + inter + " up";
     }
     
-    public static String setInterfaceDown(String inter) {
-        return "ip link set "+ inter + " down";
+    public static void setInterfaceDown(String inter) {
+        Executor setInterDown = new Executor("ip link set " + inter + " down");
+        setInterDown.execute();
     }
     
     public static String connectToESSID(String inter, String essid) {
@@ -46,16 +53,34 @@ public class Command {
         return "wpa_supplicant -B -Dwext -i" + inter + " -c/etc/wpa_supplicant.conf";
     }
     
-    public static String killWpa_Supplicant() {
-        return "pkill wpa_supplicant";
+    public static void killWpa_Supplicant() {
+        Executor killwpa_supp = new Executor("pkill wpa_supplicant");
+        killwpa_supp.execute();
     }
     
     public static String dhcpcd(String inter) {
         return "dhcpcd " + inter;
     }
     
-    public static String killdhcpcd() {
-        return "pkill dhcpcd";
+    public static void killdhcpcd() {
+        Executor killDhcpcd = new Executor("pkill dhcpcd");
+        killDhcpcd.execute();
+    }
+    
+    public static List<String> getEssids() {
+        Log.debug("Getting Essids");
+        List<String> essidList = null;
+        BigReader essids = new BigReader("iwlist wlan0 scan");
+        essids.execute();
+        Log.debug("Executed essids");
+        try {
+            essidList = essids.get();
+        } catch (InterruptedException ex) {
+            Logger.getLogger(Command.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(Command.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return essidList;
     }
 
 }
