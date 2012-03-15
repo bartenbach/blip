@@ -27,12 +27,13 @@ public class ConnectionTester extends Thread {
     private TrayHandler th;
     private int failedPings;
     private BlipUI blip;
+    private boolean initialPing;
     
     
     public ConnectionTester(BlipUI blip, TrayHandler th) {
         this.blip = blip;
         this.th = th;
-        failedPings = 0;
+        failedPings = 2;
     }
     
     @Override
@@ -59,7 +60,7 @@ public class ConnectionTester extends Thread {
                     th.setIconConnected();
                     blip.enableConnection(false);
                     blip.enableDisconnect(true);
-                    if(blip.getEssid() != null) {
+                    if(!blip.getEssid().equals("$$$$$$$$")) {
                         blip.setProgressLabel("Connected to " + blip.getEssid());
                     } else {
                         blip.setProgressLabel("Connected");
@@ -71,7 +72,7 @@ public class ConnectionTester extends Thread {
                 }
                 Thread.sleep(5000);                
             } catch (Exception ex) {
-                Log.warning("Connection test thread interrupted");
+                Log.warning("Connection test thread interrupted", ex);
             }
         }
     }

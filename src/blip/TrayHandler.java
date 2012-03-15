@@ -13,8 +13,8 @@ import java.net.URL;
  * @author seed419
  */
 public class TrayHandler extends MouseAdapter  implements ActionListener {
-    
-    
+
+
     private TrayIcon trayIcon;
     private SystemTray tray;
     private boolean supported;
@@ -23,12 +23,12 @@ public class TrayHandler extends MouseAdapter  implements ActionListener {
     private MenuItem exit;
     private MenuItem show;
     private BlipUI blip;
-    
-    
+
+
     public TrayHandler(BlipUI blip) {
         this.blip = blip;
     }
-    
+
     public void initTray() {
         if(SystemTray.isSupported()) {
             supported = true;
@@ -40,37 +40,37 @@ public class TrayHandler extends MouseAdapter  implements ActionListener {
                 Log.warning("Couldn't get system tray!!");
                 return;
             }
-            URL connurl = getClass().getResource("/img/Connected.png");
+            URL connurl = getClass().getResource("/img/connected16.png");
             connImage = Toolkit.getDefaultToolkit().getImage(connurl);
-            URL disconurl = getClass().getResource("/img/Disconnected.png");
+            URL disconurl = getClass().getResource("/img/disconnected16.png");
             disconImage = Toolkit.getDefaultToolkit().getImage(disconurl);
             MouseListener mouseListener = new MouseListener() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    System.out.println("Tray Icon - Mouse clicked!");                 
+                    System.out.println("Tray Icon - Mouse clicked!");
                 }
 
                 @Override
                 public void mouseEntered(MouseEvent e) {
-                    System.out.println("Tray Icon - Mouse entered!");                 
+                    System.out.println("Tray Icon - Mouse entered!");
                 }
 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    System.out.println("Tray Icon - Mouse exited!");                 
+                    System.out.println("Tray Icon - Mouse exited!");
                 }
 
                 @Override
                 public void mousePressed(MouseEvent e) {
-                    System.out.println("Tray Icon - Mouse pressed!");                 
+                    System.out.println("Tray Icon - Mouse pressed!");
                 }
 
                 @Override
                 public void mouseReleased(MouseEvent e) {
-                    System.out.println("Tray Icon - Mouse released!");                 
-                }   
+                    System.out.println("Tray Icon - Mouse released!");
+                }
             };
-            
+
             PopupMenu popup = new PopupMenu();
             show = new MenuItem("Show");
             show.addActionListener(this);
@@ -79,7 +79,7 @@ public class TrayHandler extends MouseAdapter  implements ActionListener {
             popup.add(exit);
             popup.add(show);
             trayIcon = new TrayIcon(disconImage, "blip", popup);
-            trayIcon.setImageAutoSize(true);
+            trayIcon.setImageAutoSize(false);
             trayIcon.setPopupMenu(popup);
             trayIcon.addMouseListener(mouseListener);
             try {
@@ -92,42 +92,42 @@ public class TrayHandler extends MouseAdapter  implements ActionListener {
             Log.warning("System tray not supported");
         }
     }
-    
+
     public void setIconConnected() {
         if (supported) {
             trayIcon.setImage(connImage);
         }
     }
-    
+
     public void setIconDisconnected() {
         if (supported) {
             trayIcon.setImage(disconImage);
-        }    
+        }
     }
-    
+
     @Override
     public void mouseClicked(MouseEvent e) {
-        System.out.println("Tray Icon - Mouse clicked!");                 
+        System.out.println("Tray Icon - Mouse clicked!");
     }
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        System.out.println("Tray Icon - Mouse entered!");                 
+        System.out.println("Tray Icon - Mouse entered!");
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        System.out.println("Tray Icon - Mouse exited!");                 
+        System.out.println("Tray Icon - Mouse exited!");
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-        System.out.println("Tray Icon - Mouse pressed!");                 
+        System.out.println("Tray Icon - Mouse pressed!");
     }
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        System.out.println("Tray Icon - Mouse released!");                 
+        System.out.println("Tray Icon - Mouse released!");
     }
 
     @Override
@@ -139,5 +139,5 @@ public class TrayHandler extends MouseAdapter  implements ActionListener {
             blip.setVisible(true);
         }
     }
-    
+
 }

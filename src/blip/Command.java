@@ -15,9 +15,7 @@ as you attribute the author(s) of this license document / files.
  */
 package blip;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,10 +65,10 @@ public class Command {
         killDhcpcd.execute();
     }
     
-    public static List<String> getEssids() {
+    public static List<String> getEssids(String inter) {
         Log.debug("Getting Essids");
         List<String> essidList = null;
-        BigReader essids = new BigReader("iwlist wlan0 scan");
+        BigReader essids = new BigReader("iwlist " + inter + " scan");
         essids.execute();
         Log.debug("Executed essids");
         try {

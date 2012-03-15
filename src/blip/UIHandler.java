@@ -5,17 +5,7 @@
 package blip;
 
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -30,7 +20,6 @@ public class UIHandler {
     private BlipUI blip;
     private int uid = 999;
     private LinkedList<String> interfaceList;
-    private Thread exe;
     
     
     public UIHandler(BlipUI blip) {
@@ -41,12 +30,12 @@ public class UIHandler {
         if(!root()) {
             JOptionPane.showMessageDialog(null, "You must run blip as root", "blip", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
-        } else {
+        } else {        
             Log.debug("Starting TrayHandler...");
             th = new TrayHandler(blip);
             th.initTray();
             Log.debug("Getting interfaces...");
-            getInterfaces();
+            //getInterfaces();
             try {
                 config = new ConfigurationFile(blip);
             } catch (FileNotFoundException ex) {
@@ -54,15 +43,11 @@ public class UIHandler {
             } catch (Exception ex) {
                 Log.severe("Couldn't read configuration file", ex);
             }
-            blip.checkEncryptionBox();
-            List<String> returnedList = Command.getEssids();
-            for (String x : returnedList) {
-                blip.addEssid(x);
-            }
             Log.info("Starting ConnectionTester thread...");
             conTest = new ConnectionTester(blip, th);
             conTest.start();
-            Log.debug("Connection Tester started");
+            Log.debug("Connection Tester started");                
+            blip.checkEncryptionBox();
         }      
     }
     
@@ -86,43 +71,45 @@ public class UIHandler {
         return true;
     }
     
-    public void getInterfaces() {
-        Log.debug("Getting network interfaces...");
-        interfaceList = new LinkedList<String>();
-        Enumeration<NetworkInterface> interfaces = null;
-        try {
-            interfaces = NetworkInterface.getNetworkInterfaces();
-        } catch (SocketException ex) {
-            Log.severe("Couldn't get network interfaces!", ex);
-        }
-        while (interfaces.hasMoreElements()) {
-            NetworkInterface interf = interfaces.nextElement();
-            try {
-                if (!interf.isLoopback()) {
-                    blip.addToInterfaceBox(interf.getName());
-                    interfaceList.add(interf.getName());
-//                    System.out.println("MAC: " + interf.getHardwareAddress().toString());
-//                    Enumeration<InetAddress> addresses = interf.getInetAddresses();
-//                    for (InetAddress x : Collections.list(addresses)) {
-//                        Log.debug("Address: " + x);
-//                    }
-//                    List<InterfaceAddress> add = interf.getInterfaceAddresses();
-//                    for (InterfaceAddress y : add) {
-//                        Log.debug("Interface Address: " + y);
-//                    }
-                }
-            } catch (SocketException ex) {
-                Logger.getLogger(BlipUI.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-        for (String x : interfaceList) {
-            Log.info("Found interface: " + x);
-        }
+    //TODO What is the deal with this?
+//    public void getInterfaces() {
+//        Log.debug("Getting network interfaces...");
+//        Executor setUp = new Executor(Command.setInterfaceUp("wlan0"));
+//        setUp.execute();
+//        interfaceList = new LinkedList<String>();
+//        Enumeration<NetworkInterface> interfaces = null;
+//        try {
+//            interfaces = NetworkInterface.getNetworkInterfaces();
+//        } catch (SocketException ex) {
+//            Log.severe("Couldn't get network interfaces!", ex);
+//        }
+//        while (interfaces.hasMoreElements()) {
+//            NetworkInterface interf = interfaces.nextElement();
+//            Log.debug("INTERFACE: " + interf.getName());
+//            try {
+//                if (!interf.isLoopback()) {
+//                    blip.addToInterfaceBox(interf.getName());
+//                    interfaceList.add(interf.getName());
+////                    System.out.println("MAC: " + interf.getHardwareAddress().toString());
+////                    Enumeration<InetAddress> addresses = interf.getInetAddresses();
+////                    for (InetAddress x : Collections.list(addresses)) {
+////                        Log.debug("Address: " + x);
+////                    }
+////                    List<InterfaceAddress> add = interf.getInterfaceAddresses();
+////                    for (InterfaceAddress y : add) {
+////                        Log.debug("Interface Address: " + y);
+////                    }
+//                }
+//            } catch (SocketException ex) {
+//                Logger.getLogger(BlipUI.class.getName()).log(Level.SEVERE, null, ex);
+//            }
+//        }
+//        for (String x : interfaceList) {
+//            Log.info("Found interface: " + x);
+//        }
+//
+//    }
 
-    }
-    
-    public void getEssids() {
-        
-    }
+
     
 }
